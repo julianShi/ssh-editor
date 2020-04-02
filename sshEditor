@@ -1,0 +1,57 @@
+#!/usr/bin/python
+import subprocess
+import sys
+import os
+
+MYEDITOR="sublime"
+LOCALDIR=os.getcwd()+'/'
+REMOTEHOST=sys.argv[1]
+
+dir_curr="~/"
+def execute(command):
+    global dir_curr
+    ssh = subprocess.Popen(["ssh", sys.argv[1], " cd "+dir_curr+";"+command],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    result = ssh.stdout.read().splitlines()
+    return result
+
+def printResult(result):
+    for r in result:
+        print(r)
+
+dir_curr=execute("pwd")[0]+"/"
+dir_prev=dir_curr
+while(True):
+    try:
+        command_raw=raw_input("%s$ " % dir_curr)
+        command=command_raw.split()
+        if(command[0]=="exit"):
+            break
+        elif(command[0]=="cd"):
+            if(command[1]=="-"):
+                new_dir=execute("cd "+dir_prev+';pwd')[0]
+            else:
+                new_dir=execute("cd "+command[1]+';pwd')[0]
+            dir_prev=dir_curr
+            dir_curr=new_dir+'/'
+        elif(command[0]=="edit"):
+            # Download the file before editing
+            filename=command[1]
+            os.system("mkdir -p "+LOCALDIR+REMOTEHOST+"/"+dir_curr)
+            ssh = subprocess.Popen(["scp", REMOTEHOST+":"+dir_curr+filename,LOCALDIR+REMOTEHOST+"/"+dir_curr],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            os.system(MYEDITOR+" "+LOCALDIR+REMOTEHOST+"/"+dir_curr+filename)
+        elif(command[0]=="add"):
+            # Download the file before editing
+            filename=command[1]
+            ssh = subprocess.Popen(["scp", LOCALDIR+REMOTEHOST+"/"+dir_curr+filename,REMOTEHOST+":"+dir_curr],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        elif(command[0]=="help"):
+            raise Exception("help")
+        else:
+            result=execute(command_raw)
+            printResult(result)
+    except:
+        print("-- Please use the correct syntax:")
+        print("   cd   <your-dir>  # This navigates to the folder of you specified.")
+        print("   edit <file-name> # This downloads the file to your local computer and edit using your specified editor.")
+        print("   add  <file-name> # This uploads/overwrites the file to the remote server.")
+        print("   exit # Exit the shell.")
+        print("   # All linux commands are supported.")
