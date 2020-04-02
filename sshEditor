@@ -18,6 +18,7 @@ def execute(command):
 dir_curr=execute("pwd")[0]+"/"
 dir_prev=dir_curr
 uncheckedfiles=set([])
+filesInThisFolder=[]
 while(True):
     try:
         command_raw=raw_input("%s$ " % dir_curr)
@@ -31,9 +32,20 @@ while(True):
                 new_dir=execute("cd "+command[1]+';pwd')[0]
             dir_prev=dir_curr
             dir_curr=new_dir+'/'
+        elif(command[0]=="list"):
+            # itemize the list of files in the current folder. Exclude directories
+            filesInThisFolder=execute('for FILE in `ls`;do if [[ -f "$FILE" ]]; then;echo "$FILE";fi;done')
+            for i in range(len(filesInThisFolder)):
+                print('{:3d}: '.format(i) +filesInThisFolder[i])
+            print('-- Now you can run `[downlaod|upload] <index>` to download/upload the file by its index above.')
         elif(command[0]=="download"):
             # Download the file before editing
             filename=command[1]
+            # Choose file by number
+            if(len(filesInThisFolder)>0):
+                if(filename.isdigit()):
+                    filename=filesInThisFolder[int(filename)]
+                filesInThisFolder=[]
             os.system("mkdir -p "+LOCALDIR+REMOTEHOST+"/"+dir_curr)
             subprocess.Popen(["scp", REMOTEHOST+":"+dir_curr+filename,LOCALDIR+REMOTEHOST+"/"+dir_curr],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             os.system(EDITOR+" "+LOCALDIR+REMOTEHOST+"/"+dir_curr+filename)
@@ -41,6 +53,11 @@ while(True):
         elif(command[0]=="upload"):
             # Download the file before editing
             filename=command[1]
+            # Choose file by number
+            if(len(filesInThisFolder)>0):
+                if(filename.isdigit()):
+                    filename=filesInThisFolder[int(filename)]
+                filesInThisFolder=[]
             subprocess.Popen(["scp", LOCALDIR+REMOTEHOST+"/"+dir_curr+filename,REMOTEHOST+":"+dir_curr],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             uncheckedfiles.remove(dir_curr+filename)
         elif(command[0]=="status"):
@@ -64,8 +81,9 @@ while(True):
     except:
         print("-- Please use the correct syntax:")
         print("   cd   <your-dir>      # This navigates to the folder of you specified.")
+        print("   list                 # Itemize files in the current directory, for the use of the download and upload commands.")
         print("   download <file-name> # This downloads the file to your local computer and edit using your specified editor.")
         print("   upload  <file-name>  # This uploads/overwrites the file to the remote server.")
-        print("   status               # list all local files not synchronized with remote.")
+        print("   status               # List all local files not synchronized with remote.")
         print("   exit # Exit the shell.")
         print("                        # All linux commands, except for interactive shell commands, are supported.")
