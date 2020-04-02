@@ -22,8 +22,14 @@ def execute(command):
     ssh = subprocess.Popen(["ssh", REMOTEHOST, " cd "+dir_curr+";"+command],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     return ssh.stdout.read().splitlines()
 
-dir_curr=execute("pwd")[0]+"/"
+# Get the home directory
+result=execute("pwd")
+if(len(result)==0):
+    print("-- Connot connect to "+REMOTEHOST)
+    sys.exit()
+dir_curr=result[0]+"/"
 dir_prev=dir_curr
+
 uncheckedfiles=set([])
 filesInThisFolder=[]
 while(True):
@@ -57,6 +63,15 @@ while(True):
             subprocess.Popen(["scp", REMOTEHOST+":"+dir_curr+filename,LOCALDIR+REMOTEHOST+"/"+dir_curr],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             os.system(EDITOR+" "+LOCALDIR+REMOTEHOST+"/"+dir_curr+filename)
             uncheckedfiles.add(dir_curr+filename)
+        elif(command[0]=="edit"):
+            # Download the file before editing
+            filename=command[1]
+            if(filename[0]!='/'):
+                filename=dir_curr+filename
+            if(filename not in uncheckedfiles):
+                print('-- This file is not in local. Please type "download <file-name>" to download this file.')
+            else:
+                os.system(EDITOR+" "+LOCALDIR+REMOTEHOST+"/"+filename)
         elif(command[0]=="upload"):
             # Download the file before editing
             filename=command[1]
@@ -87,9 +102,10 @@ while(True):
                 print(r)
     except:
         print("-- Please use the correct syntax:")
-        print("   cd   <your-dir>      # This navigates to the folder of you specified.")
+        print("   cd <your-dir>        # This navigates to the folder of you specified.")
         print("   list                 # Itemize files in the current directory, for the use of the download and upload commands.")
         print("   download <file-name> # This downloads the file to your local computer and edit using your specified editor.")
+        print("   edit <file-name>     # Edit the file using your specified editor if this file is downloaded to your local computer .")
         print("   upload  <file-name>  # This uploads/overwrites the file to the remote server.")
         print("   status               # List all local files not synchronized with remote.")
         print("   exit                 # Exit the shell.")
