@@ -3,7 +3,9 @@ import subprocess
 import sys
 import os
 
-MYEDITOR="sublime"
+EDITOR="sublime"
+if(len(os.environ['EDITOR'])>0):
+    EDITOR=os.environ['EDITOR']
 LOCALDIR=os.getcwd()+'/'
 REMOTEHOST=sys.argv[1]
 
@@ -11,15 +13,11 @@ dir_curr="~/"
 def execute(command):
     global dir_curr
     ssh = subprocess.Popen(["ssh", sys.argv[1], " cd "+dir_curr+";"+command],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    result = ssh.stdout.read().splitlines()
-    return result
-
-def printResult(result):
-    for r in result:
-        print(r)
+    return ssh.stdout.read().splitlines()
 
 dir_curr=execute("pwd")[0]+"/"
 dir_prev=dir_curr
+uncheckedfiles=set([])
 while(True):
     try:
         command_raw=raw_input("%s$ " % dir_curr)
@@ -33,25 +31,40 @@ while(True):
                 new_dir=execute("cd "+command[1]+';pwd')[0]
             dir_prev=dir_curr
             dir_curr=new_dir+'/'
-        elif(command[0]=="edit"):
+        elif(command[0]=="download"):
             # Download the file before editing
             filename=command[1]
             os.system("mkdir -p "+LOCALDIR+REMOTEHOST+"/"+dir_curr)
-            ssh = subprocess.Popen(["scp", REMOTEHOST+":"+dir_curr+filename,LOCALDIR+REMOTEHOST+"/"+dir_curr],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            os.system(MYEDITOR+" "+LOCALDIR+REMOTEHOST+"/"+dir_curr+filename)
-        elif(command[0]=="add"):
+            subprocess.Popen(["scp", REMOTEHOST+":"+dir_curr+filename,LOCALDIR+REMOTEHOST+"/"+dir_curr],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            os.system(EDITOR+" "+LOCALDIR+REMOTEHOST+"/"+dir_curr+filename)
+            uncheckedfiles.add(dir_curr+filename)
+        elif(command[0]=="upload"):
             # Download the file before editing
             filename=command[1]
-            ssh = subprocess.Popen(["scp", LOCALDIR+REMOTEHOST+"/"+dir_curr+filename,REMOTEHOST+":"+dir_curr],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            subprocess.Popen(["scp", LOCALDIR+REMOTEHOST+"/"+dir_curr+filename,REMOTEHOST+":"+dir_curr],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            uncheckedfiles.remove(dir_curr+filename)
+        elif(command[0]=="status"):
+            if(len(uncheckedfiles)==0):
+                print("-- All files have been synchronized to remote server.")
+            else:
+                print("-- Files not uploaded to remote server:")
+                for filename in uncheckedfiles:
+                    print("   "+filename)
+                uploadAll=raw_input("-- Type \"yes\" to upload all local files to remote. Type anything else to ignore: ")
+                if(uploadAll == "yes"):
+                    for filename in uncheckedfiles:
+                        subprocess.Popen(["scp", LOCALDIR+REMOTEHOST+"/"+filename,REMOTEHOST+":"+filename],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    uncheckedfiles=set([])
         elif(command[0]=="help"):
             raise Exception("help")
         else:
             result=execute(command_raw)
-            printResult(result)
+            for r in result:
+                print(r)
     except:
         print("-- Please use the correct syntax:")
         print("   cd   <your-dir>  # This navigates to the folder of you specified.")
-        print("   edit <file-name> # This downloads the file to your local computer and edit using your specified editor.")
-        print("   add  <file-name> # This uploads/overwrites the file to the remote server.")
+        print("   download <file-name> # This downloads the file to your local computer and edit using your specified editor.")
+        print("   upload  <file-name> # This uploads/overwrites the file to the remote server.")
         print("   exit # Exit the shell.")
-        print("   # All linux commands are supported.")
+        print("   # All linux commands, except for interactive shell commands, are supported.")
