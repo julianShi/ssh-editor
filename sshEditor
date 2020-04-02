@@ -2,6 +2,12 @@
 import subprocess
 import sys
 import os
+import string
+
+if(len(sys.argv)<2 or sys.argv[1][0] not in string.ascii_letters+string.digits+"_"):
+    print("-- Please enter the shell using the correct syntax:")
+    print("   sshEditor <username@hostname>")
+    sys.exit()
 
 EDITOR="sublime"
 if(len(os.environ['EDITOR'])>0):
@@ -12,7 +18,8 @@ REMOTEHOST=sys.argv[1]
 dir_curr="~/"
 def execute(command):
     global dir_curr
-    ssh = subprocess.Popen(["ssh", sys.argv[1], " cd "+dir_curr+";"+command],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    global REMOTEHOST
+    ssh = subprocess.Popen(["ssh", REMOTEHOST, " cd "+dir_curr+";"+command],shell=False,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     return ssh.stdout.read().splitlines()
 
 dir_curr=execute("pwd")[0]+"/"
@@ -21,7 +28,7 @@ uncheckedfiles=set([])
 filesInThisFolder=[]
 while(True):
     try:
-        command_raw=raw_input("%s$ " % dir_curr)
+        command_raw=raw_input(REMOTEHOST+":"+dir_curr+"$ ")
         command=command_raw.split()
         if(command[0]=="exit"):
             break
@@ -85,5 +92,5 @@ while(True):
         print("   download <file-name> # This downloads the file to your local computer and edit using your specified editor.")
         print("   upload  <file-name>  # This uploads/overwrites the file to the remote server.")
         print("   status               # List all local files not synchronized with remote.")
-        print("   exit # Exit the shell.")
+        print("   exit                 # Exit the shell.")
         print("                        # All linux commands, except for interactive shell commands, are supported.")
