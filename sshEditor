@@ -63,8 +63,9 @@ while(True):
                 print(r)
     except:
         print("-- Please use the correct syntax:")
-        print("   cd   <your-dir>  # This navigates to the folder of you specified.")
+        print("   cd   <your-dir>      # This navigates to the folder of you specified.")
         print("   download <file-name> # This downloads the file to your local computer and edit using your specified editor.")
-        print("   upload  <file-name> # This uploads/overwrites the file to the remote server.")
+        print("   upload  <file-name>  # This uploads/overwrites the file to the remote server.")
+        print("   status               # list all local files not synchronized with remote.")
         print("   exit # Exit the shell.")
-        print("   # All linux commands, except for interactive shell commands, are supported.")
+        print("                        # All linux commands, except for interactive shell commands, are supported.")
