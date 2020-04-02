@@ -2,7 +2,7 @@
 This is a shell project that edits your remote files using your desktop editor
 
 # Setup
-Please setup sshkey login before using this tool.
+Please setup sshkey autentication before using this tool.
 
 You can edit the line
 ```
@@ -21,14 +21,29 @@ This navigates to the folder of you specified.
 cd   <your-dir>  
 ```
 
+Itemize files in the current directory, for the use of the download and upload commands.
+```sh
+list
+```
+
 This downloads the file to your local computer and edit using your specified editor.
+```sh
+download <file-name> 
+```
+
+Edit the file using your specified editor if this file is downloaded to your local computer.
 ```sh
 edit <file-name> 
 ```
 
+List all local files not synchronized with remote. 
+```sh
+status
+```
+
 This uploads/overwrites the file to the remote server.
 ```sh
-add  <file-name> 
+upload  <file-name> 
 ```
 
 Exit the shell.
@@ -55,6 +70,7 @@ In the shell, you can
 /home/yulinshi/$ cd test # navigate in the folders
 /home/yulinshi/$ touch hello # create a file in remote
 /home/yulinshi/$ download hello # download the file to local and edit
+/home/yulinshi/$ edit hello # edit the local file
 /home/yulinshi/$ status
 -- Files not uploaded to remote server:
    /home/yulinshi/test/hello
@@ -63,3 +79,6 @@ In the shell, you can
 /home/yulinshi/test/$ cat hello # show the modified file in remote
 World, how are you?
 ```
+
+# Limitations
+The sshkey is the only authentication method supported currently. 
