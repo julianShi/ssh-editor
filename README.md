@@ -31,3 +31,18 @@ exit
 All linux commands are supported.
 
 # Example 
+Execute the shell by
+```sh
+% sshEditor yourname@remotehost
+```
+
+In the shell, you can
+```
+/home/yulinshi/$ mkdir test # make a directory in remote
+/home/yulinshi/$ cd test # navigate in the folders
+/home/yulinshi/$ touch hello # create a file in remote
+/home/yulinshi/$ edit hello # download the file to local and edit
+/home/yulinshi/$ add hello # upload the file to remote
+/home/yulinshi/test/$ cat hello # show the modified file in remote
+World, how are you?
+```
